@@ -35,8 +35,8 @@ Upload the code contained in this sketch on to your board
 === License
 This project is released under a {License} License.
 
-=== Contributing
-To contribute to this project please contact matthewtaylor https://id.arduino.cc/matthewtaylor
+=== Contact
+matt_t251@gmail.com
 
 === Help
 This document is written in the _AsciiDoc_ format, a markup language to describe documents.
