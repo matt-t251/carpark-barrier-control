@@ -10,9 +10,9 @@
 
 == Step 1: Installation
 
-1. 
-2. 
-3. 
+1.  
+2.  
+3.  
 
 == Step 2: Assemble the circuit
 
