@@ -1,10 +1,10 @@
-:Author: matthewtaylor
-:Email: {AuthorEmail}
+:Author: matthew
+:Email: matt_t251@gmail.com
 :Date: 23/01/2019
-:Revision: version#
+:Revision: version1
 :License: Public Domain
 
-= Project: {Project}
+= Project: Carpark Barrier Control
 
 ...
 
