@@ -22,8 +22,9 @@ int lastFullState = LOW;
 int barrierState = LOW; // What state is down?
 int carCount = 0;
 int fullBlinkTriggered = false; // used to tell the loop to blink full sign for 5 seconds.
-int fullStateCount = 0;
+int fullStateCount = 0;  // used to count how many time the sign has blinked. 
 unsigned long previousMillis = 0;
+unsigned long currentMillis = millis();
 
 void setup() {
   pinMode(S1, INPUT);
@@ -38,37 +39,43 @@ void setup() {
 }
 
 void loop() {
-  if (digitalRead(S1) == HIGH) newCar();
+  if (digitalRead(S1) == HIGH) newCar();      // need to debounce
 
-  if (digitalRead(S3) == HIGH) carLeaving();
-  
-  unsigned long currentMillis = millis();
-  
+  if (digitalRead(S3) == HIGH) carLeaving();  // need to debounce
+
   if ( fullBlinkTriggered == true ) {
-    for (fullStateCount = 0; fullStateCount <= 10; i++) {
-      if (fullState != lastFullState) {
+    
+    if (fullState != lastFullState) {
         int fullStateCount = fullStateCount + 1;
       };
-      if ( currentMillis - previousMillis >= interval ) {
-        previousMillis = currentMillis;
-        if (fullState == LOW) {
-          fullState = HIGH;
-          fullState = lastFullState;
-        } else {
-          fullState = LOW;
-          fullState = lastFullState;
-        }
-        digitalWrite(Full, fullState);
+      
+    if ( currentMillis - previousMillis >= interval && fullStateCount <= 10 ) {
+      previousMillis = currentMillis;
+      
+      if (fullState == LOW) {
+        fullState = HIGH;
+        lastFullState = fullState;
+      } else {
+        fullState = LOW;
+        lastFullState = fullState;
+      }
+      digitalWrite(Full, fullState);
+      
+      if ( fullStateCount >= 11 ){
+        int fullStateCount = 0;
+        fullBlinkTriggered = false;
       };
     };
-    int fullBlinkTriggered = false;
   };
-};
+}  
+  
+
 
 void newCar() {
   if (carCount < 5) {
     openBarrier();
-  } else { int fullBlinkTriggered = true;
+  } else {
+    int fullBlinkTriggered = true;
   };
 
 }
@@ -107,38 +114,6 @@ void carLeaving() {
 
 
 /*
-
-void loop() {
-  // here is where you'd put code that needs to be running all the time.
-
-  // check to see if it's time to blink the LED; that is, if the difference
-  // between the current time and last time you blinked the LED is bigger than
-  // the interval at which you want to blink the LED.
-  unsigned long currentMillis = millis();
-
-  if (currentMillis - previousMillis >= interval) {
-    // save the last time you blinked the LED
-    previousMillis = currentMillis;
-
-    // if the LED is off turn it on and vice-versa:
-    if (ledState == LOW) {
-      ledState = HIGH;
-    } else {
-      ledState = LOW;
-    }
-
-    // set the LED with the ledState of the variable:
-    digitalWrite(ledPin, ledState);
-  }
-}
-
-
-
-
-
-
-
-/*
   Stepper Motor Control - one revolution
 
   This program drives a unipolar or bipolar stepper motor.
@@ -161,15 +136,15 @@ void loop() {
 
 */
 /*
-#include <Stepper.h>
+  #include <Stepper.h>
 
-const int stepsPerRevolution = 200;  // change this to fit the number of steps per revolution
-// for your motor
+  const int stepsPerRevolution = 200;  // change this to fit the number of steps per revolution
+  // for your motor
 
-// initialize the stepper library on pins 8 through 11:
-Stepper myStepper(stepsPerRevolution, 8, 11, 12, 13);
+  // initialize the stepper library on pins 8 through 11:
+  Stepper myStepper(stepsPerRevolution, 8, 11, 12, 13);
 
-void setup() {
+  void setup() {
   // set the speed at 60 rpm:
   myStepper.setSpeed(60);
   // initialize the serial port:
@@ -178,9 +153,9 @@ void setup() {
   pinMode(10, OUTPUT);
   digitalWrite(9, HIGH);
   digitalWrite(10, HIGH);
-}
+  }
 
-void loop() {
+  void loop() {
   // step one revolution  in one direction:
   Serial.println("clockwise");
   myStepper.step(stepsPerRevolution);
@@ -190,6 +165,6 @@ void loop() {
   Serial.println("counterclockwise");
   myStepper.step(-stepsPerRevolution);
   delay(500);
-}
+  }
 
 */
