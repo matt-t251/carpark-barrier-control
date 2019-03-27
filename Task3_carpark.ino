@@ -1,16 +1,22 @@
-/*
 
-*/
+#include <Stepper.h>
+
+const int stepsPerRevolution = 200;
+Stepper myStepper(stepsPerRevolution, 8, 11, 12, 13);
+
 
 // Constants:
 
-const int S1 = 1;
+const int S1 = 7;
 const int S2 = 2;
 const int S3 = 3;
 const int Red = 4;
 const int Green = 5;
 const int Full = 6;
-const long interval = 500;
+const int interval = 500;
+const int debounceDelay = 10;
+const int openSteps = 50;
+const int closeSteps = -50;
 
 // Variables;
 
@@ -19,12 +25,18 @@ int redState = HIGH;
 int greenState = LOW;
 int fullState = LOW;
 int lastFullState = LOW;
-int barrierState = LOW; // What state is down?
 int carCount = 0;
 int fullBlinkTriggered = false; // used to tell the loop to blink full sign for 5 seconds.
-int fullStateCount = 0;  // used to count how many time the sign has blinked. 
+int fullStateCount = 0;         // used to count how many time the sign has blinked.
+int readingS1 = LOW;
+int readingS2 = LOW;
+int readingS3 = LOW;
+int previousS1 = LOW;
+int previousS2 = LOW;
+int previousS3 = LOW;
 unsigned long previousMillis = 0;
 unsigned long currentMillis = millis();
+
 
 void setup() {
   pinMode(S1, INPUT);
@@ -33,25 +45,62 @@ void setup() {
   pinMode(Green, OUTPUT);
   pinMode(Red, OUTPUT);
   pinMode(Full, OUTPUT);
+  pinMode(9, OUTPUT);
+  pinMode(10, OUTPUT);
+  digitalWrite(9, HIGH);
+  digitalWrite(10, HIGH);
   digitalWrite(Green, greenState);
   digitalWrite(Full, fullState);
   digitalWrite(Red, redState);
+  myStepper.setSpeed(30);
+  Serial.begin(9600);
+  Serial.println("Setup Finished");
 }
 
 void loop() {
-  if (digitalRead(S1) == HIGH) newCar();      // need to debounce
+  
+    // Debounce S1:
 
-  if (digitalRead(S3) == HIGH) carLeaving();  // need to debounce
+readingS1 = digitalRead(S1);
+    if (readingS1 == HIGH && previousS1 == 0){
+      newCar();
+    };
+    previousS1 = readingS1;
 
-  if ( fullBlinkTriggered == true ) {
-    
-    if (fullState != lastFullState) {
-        int fullStateCount = fullStateCount + 1;
-      };
+    // Debouse S2:
+
+    readingS2 = digitalRead(S2);
+    if (readingS2 == HIGH && previousS2 == 0){
+      closeBarrier();
+    };
+    previousS2 = readingS2;
+
+    // Debounce S3:
+
+
+    readingS3 = digitalRead(S3);
+    if (readingS3 == HIGH && previousS3 == 0){
       
+      Serial.println("running carLeaving");
+      carCount = carCount - 1;
+      Serial.println(carCount);
+      digitalWrite(Full, LOW);
+      Serial.println("returning to loop");
+      Serial.println("--------------");  
+      
+    };
+    previousS3 = readingS3;
+
+
+
+
+  // Blink the Car Park Full Sign:
+  
+  if ( fullBlinkTriggered == true ) {
+    currentMillis = millis();
     if ( currentMillis - previousMillis >= interval && fullStateCount <= 10 ) {
       previousMillis = currentMillis;
-      
+
       if (fullState == LOW) {
         fullState = HIGH;
         lastFullState = fullState;
@@ -60,111 +109,64 @@ void loop() {
         lastFullState = fullState;
       }
       digitalWrite(Full, fullState);
-      
-      if ( fullStateCount >= 11 ){
+      Serial.println("Blinking Full sign");
+      if ( fullStateCount >= 11 ) {
         int fullStateCount = 0;
         fullBlinkTriggered = false;
       };
     };
   };
-}  
-  
-
-
-void newCar() {
-  if (carCount < 5) {
-    openBarrier();
-  } else {
-    int fullBlinkTriggered = true;
-  };
 
 }
 
+void newCar() {
+  Serial.println("running new car");
+  Serial.println("carCount at start:");
+  Serial.println(carCount);
+  if (carCount < 5) {
+    Serial.println("about to run openBarrier");
+    openBarrier();
+  } else {
+    Serial.println("fullBlinkTriggered = true");
+    int fullBlinkTriggered = true;
+  };
+}
+
+
 void openBarrier() {
-  // open barrier
+  Serial.println("running openBarrier");
+  myStepper.step(openSteps);
   digitalWrite(Red, LOW);
   digitalWrite(Green, HIGH);
-  if (digitalRead(S1) == LOW) {
-    if (digitalRead(S2) == HIGH) { //rework to look for a brief high.
-      closeBarrier();
-    };
-  };
+  Serial.println("Returning to loop");
+  Serial.println("--------------");
 }
 
 void closeBarrier() {
+  Serial.println("running closeBarrier");
+  Serial.println("current carCount:");
+  Serial.println(carCount);
+
   carCount = carCount + 1;
+  Serial.println("new carCount");
+  Serial.println(carCount);
   if ( carCount >= 5 ) {
+    Serial.println("Full sign to high");
     digitalWrite( Full, HIGH );
   };
   digitalWrite(Red, HIGH);
   digitalWrite(Green, LOW);
-  // close barrier
+  myStepper.step(closeSteps);
+  Serial.println("returning to loop");
+  Serial.println("--------------");
 }
 
 void carLeaving() {
+  Serial.println("running carLeaving");
   carCount = carCount - 1;
+  Serial.println(carCount);
   digitalWrite(Full, LOW);
+  Serial.println("returning to loop");
+  Serial.println("--------------");
 }
 
-
-
-
-
-
-
-
-/*
-  Stepper Motor Control - one revolution
-
-  This program drives a unipolar or bipolar stepper motor.
-  The motor is attached to digital pins 8 - 11 of the Arduino.
-
-  The motor should revolve one revolution in one direction, then
-  one revolution in the other direction.
-
-
-  Created 11 Mar. 2007
-  Modified 30 Nov. 2009
-  by Tom Igoe
-
-  s1 on 1
-  s2 on 2
-  s3 on 3
-  green on 5
-  red on 4
-  full on 6
-
-*/
-/*
-  #include <Stepper.h>
-
-  const int stepsPerRevolution = 200;  // change this to fit the number of steps per revolution
-  // for your motor
-
-  // initialize the stepper library on pins 8 through 11:
-  Stepper myStepper(stepsPerRevolution, 8, 11, 12, 13);
-
-  void setup() {
-  // set the speed at 60 rpm:
-  myStepper.setSpeed(60);
-  // initialize the serial port:
-  Serial.begin(9600);
-  pinMode(9, OUTPUT);
-  pinMode(10, OUTPUT);
-  digitalWrite(9, HIGH);
-  digitalWrite(10, HIGH);
-  }
-
-  void loop() {
-  // step one revolution  in one direction:
-  Serial.println("clockwise");
-  myStepper.step(stepsPerRevolution);
-  delay(500);
-
-  // step one revolution in the other direction:
-  Serial.println("counterclockwise");
-  myStepper.step(-stepsPerRevolution);
-  delay(500);
-  }
-
-*/
