@@ -150,7 +150,7 @@ void closeBarrier() {
   carCount = carCount + 1;
   Serial.println("new carCount");
   Serial.println(carCount);
-  if ( carCount >= 5 ) {
+  if ( carCount >= 20 ) {
     Serial.println("Full sign to high");
     digitalWrite( Full, HIGH );
   };
